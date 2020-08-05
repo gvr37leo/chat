@@ -1,9 +1,17 @@
 /// <reference path="node_modules/vectorx/vector.ts" />
 /// <reference path="node_modules/utilsx/utils.ts" />
 
+function htmlToElement(html) {
+    var template = document.createElement('template');
+    html = html.trim(); // Never return a text node of whitespace as the result
+    template.innerHTML = html;
+    return template.content.firstChild;
+}
+
 class Message{
     createdAt:Date = new Date()
-
+    html:HTMLElement
+    repliesspan:HTMLSpanElement
     constructor(
         public id:number,
         public text:string,
@@ -20,19 +28,27 @@ class Message{
             result = regex.exec(this.text)
         }
         for(var item of arr){
-            mentions.push(new Mention(mentionidcounter++,this.id,parseInt(item[1])))
+            var mentionid = parseInt(item[1])
+            mentions.push(new Mention(mentionidcounter++,this.id,mentionid))
+            findMessage(mentionid)?.addReply(this.id)
         }
 
         var replaceresult = this.text.replace(regex,(substring,p1) => {
             return `<a href="#${p1}">${substring}</a>`
         })
-
-        return `
+        this.html = string2html(`
             <div style="border:1px solid black; margin:10px 0px; padding:10px; max-width:700px; max-height:200px; overflow:auto;">
-                <a href="#${this.id}">${this.id}</a>
+                <a name="${this.id}" href="#${this.id}">${this.id}</a> replies <span id="replies"></span>
                 <pre style="font-family:Arial, Helvetica, sans-serif;">${replaceresult}</pre>
             </div>
-        `
+        `)
+        this.repliesspan = this.html.querySelector('#replies')
+        
+        return this.html
+    }
+
+    addReply(replyid:number){
+        this.repliesspan.insertAdjacentHTML('beforeend',`<a href="#${replyid}">${replyid}</a>`)
     }
 }
 
@@ -44,6 +60,10 @@ class Mention{
     ){
 
     }
+}
+
+function findMessage(messageid:number){
+    return messages.find(m => m.id == messageid)
 }
 
 function findReplies(messageid:number){
@@ -67,11 +87,25 @@ var messages:Message[] = []
 var mentionidcounter = 0
 var mentions:Mention[] = []
 
-var message = new Message(messageidcounter++,'test message',[])
-messagecontainer.insertAdjacentHTML('beforeend',message.render())
+var message = new Message(messageidcounter++,'test message')
+messagecontainer.appendChild(message.render())
+messages.push(message)
 
-this.sendbtn.addEventListener('click',e => {
-    var message = new Message(messageidcounter++,textarea.value,[])
-    messagecontainer.insertAdjacentHTML('beforeend',message.render())
+function sendMessage(){
+    var message = new Message(messageidcounter++,textarea.value)
+    messagecontainer.appendChild(message.render())
+    messages.push(message)
     textarea.value = ''
+}
+
+sendbtn.addEventListener('click',e => {
+    sendMessage()
 })
+
+textarea.addEventListener('keydown', e => {
+    if(e.key == 'Enter' && e.shiftKey){
+        e.preventDefault()
+        sendMessage()
+    }
+})
+
