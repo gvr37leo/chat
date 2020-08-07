@@ -1,4 +1,4 @@
-var closehoveronmouseleave = false
+var closehoveronmouseleave = true
 
 class Message{
     createdAt:Date = new Date()
@@ -37,7 +37,7 @@ function addMessage(text:string):number{
     return newmessageid
 }
 
-function renderMessage(id:number,previewLinks:boolean,onlinkClick:() => void):HTMLElement{
+function renderMessage(id:number,previewLinks:boolean,onlinkClick:(linktarget:number) => void):HTMLElement{
     var mentions = findMentions(id)
     var replies = findReplies(id)
     var message = findMessage(id)
@@ -75,7 +75,7 @@ function renderMessage(id:number,previewLinks:boolean,onlinkClick:() => void):HT
     return html
 }
 
-function addPreviewAndConversationLink(linkelement:HTMLElement,targetmessageid:number,onlinkClick:() => void){
+function addPreviewAndConversationLink(linkelement:HTMLElement,targetmessageid:number,onlinkClick:(linktarget:number) => void){
     if(findMessage(targetmessageid) == null){
         return
     }else{
@@ -92,7 +92,7 @@ function addPreviewAndConversationLink(linkelement:HTMLElement,targetmessageid:n
 
         linkelement.addEventListener('click', e => {
             e.preventDefault()
-            onlinkClick()
+            onlinkClick(targetmessageid)
         })
     }
 }

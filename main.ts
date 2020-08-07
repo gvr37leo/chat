@@ -25,6 +25,7 @@ var mentionidcounter = 0
 var mentions:Mention[] = []
 var conversationMessages:number[] = []
 
+textarea.focus()
 textarea.value = 'test message'
 sendMessage()
 textarea.value = '>>0'
@@ -35,23 +36,29 @@ sendbtn.addEventListener('click',e => {
 
 function sendMessage(){
     let newmessageid = addMessage(textarea.value)
-    messagecontainer.appendChild(renderMessage(newmessageid,true,() => {
-        conversationMessages = [newmessageid]
-        renderConvo()
-    }))
+    messagecontainer.innerHTML = ''
+    for(var message of messages){
+        messagecontainer.appendChild(renderMessage(message.id,true,(linktarget) => {
+            conversationMessages = [linktarget]
+            renderConvo()
+        }))
+    }
+    // messagecontainer.appendChild(renderMessage(newmessageid,true,(linktarget) => {
+    //     conversationMessages = [linktarget]
+    //     renderConvo()
+    // }))
     textarea.value = ''
 }
 
 
 function renderConvo(){
-    conversationcontainer
-    conversationMessages
 
     conversationcontainer.innerHTML = ''
     for (let i = 0; i < conversationMessages.length; i++) {
         let messageid = conversationMessages[i];
-        conversationcontainer.appendChild(renderMessage(messageid,true,() => {
-            conversationMessages.splice(i + 1,1,messageid)
+        conversationcontainer.appendChild(renderMessage(messageid,true,(linktarget) => {
+            conversationMessages.splice(i + 1)
+            conversationMessages.push(linktarget)
             renderConvo()
         }))
     }
@@ -66,7 +73,7 @@ textarea.addEventListener('keydown', e => {
     }
 })
 
-document.addEventListener('mousedown', e => {
+document.addEventListener('click', e => {
     var target = e.target as HTMLElement
     if(target.closest('#cursorfloater') != cursorfloater){
         cursorfloater.style.display = 'none'
