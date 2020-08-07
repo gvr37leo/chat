@@ -19,113 +19,77 @@ class Message{
     ){
 
     }
-
-    render(){
-        // var regex = />>([0-9]{1,6})/g
-        // var arr:RegExpExecArray[] = []
-        // var result = regex.exec(this.text)
-        // while(result != null){
-        //     arr.push(result)
-        //     result = regex.exec(this.text)
-        // }
-        // for(var item of arr){
-        //     var mentionid = parseInt(item[1])
-        //     mentions.push(new Mention(mentionidcounter++,this.id,mentionid))
-        //     var mentiomessage = findMessage(mentionid)
-        //     if(mentiomessage){
-        //         mentiomessage.addReply(this.id)
-        //     }
-        // }
-
-        // var replaceresult = this.text.replace(regex,(substring,p1) => {
-        //     return `<a href="#${p1}" data-messageid="${p1}">${substring}</a>`
-        // })
-        // this.html = string2html(`
-        //     <div style="border:1px solid black; margin:10px 0px; padding:10px; max-width:700px; max-height:200px; overflow:auto; background-color: white;">
-        //         <a name="${this.id}" href="#${this.id}">${this.id}</a> replies <span id="replies"></span>
-        //         <pre style="font-family:Arial, Helvetica, sans-serif;">${replaceresult}</pre>
-        //     </div>
-        // `)
-        // this.repliesspan = this.html.querySelector('#replies')
-        // this.mentions = Array.from(this.html.querySelectorAll('pre a'))
-        // for(let mention of this.mentions){
-        //     this.addPreviewAndConversationLink(mention,parseInt(mention.dataset.messageid))
-            
-        // }
-
-        // return this.html
-    }
-
-    // copy(){
-    //     var msg = new Message(this.id,this.text)
-    //     msg.createdAt = this.createdAt
-    //     return msg
-    // }
-
-    // addReply(replyid:number){
-    //     var tag = string2html(`<a style="margin-right:10px;" href="#${replyid}">${replyid}</a>`)
-    //     this.addPreviewAndConversationLink(tag,replyid)
-    //     this.repliesspan.appendChild(tag)
-    // }
-
-    addPreviewAndConversationLink(linkelement:HTMLElement,targetmessageid:number){
-        var targetmessage = findMessage(targetmessageid)
-        if(targetmessage == null){
-            return
-        }else{
-            linkelement.addEventListener('mouseenter', e => {
-                setCursorFloater(linkelement, targetmessage.html)
-            })
-
-            // mention.addEventListener('mouseleave',e => {
-            //     cursorfloater.style.display = 'none'
-            // })
-
-            linkelement.addEventListener('click', e => {
-                e.preventDefault()
-                conversationcontainer.appendChild(targetmessage.copy().render())
-                //add to convo
-            })
-
-        }
-    }
 }
 function addMessage(text:string):number{
     var regex = />>([0-9]{1,6})/g
-    var result = regex.exec(this.text)
+    var result = regex.exec(text)
     var newmessageid = messageidcounter++
     
     while(result != null){
         mentions.push(new Mention(mentionidcounter++, newmessageid, parseInt(result[1])))
-        result = regex.exec(this.text)
+        result = regex.exec(text)
     }
     messages.push(new Message(newmessageid,text))
     
     return newmessageid
 }
 
-function renderMessage(id:number):HTMLElement{
+function renderMessage(id:number,previewLinks:boolean):HTMLElement{
     var mentions = findMentions(id)
     var replies = findReplies(id)
     var message = findMessage(id)
     var regex = />>([0-9]{1,6})/g
-    
-    var replaceresult = this.text.replace(regex,(substring,p1) => {
+
+    var replieselements = replies.map(rep => {
+        var element = string2html(`<a style="margin-right:10px;" href="#${rep.id}">${rep.id}</a>`)
+        if(previewLinks){
+            addPreviewAndConversationLink(element,rep.id)
+        }
+        return element
+    })
+
+    var replaceresult = message.text.replace(regex,(substring,p1) => {
         return `<a href="#${p1}" data-messageid="${p1}">${substring}</a>`
     })
+
     var html = string2html(`
         <div style="border:1px solid black; margin:10px 0px; padding:10px; max-width:700px; max-height:200px; overflow:auto; background-color: white;">
-            <a name="${this.id}" href="#${this.id}">${this.id}</a> replies <span id="replies"></span>
-            <pre style="font-family:Arial, Helvetica, sans-serif;">${replaceresult}</pre>
+            <a name="${message.id}" href="#${message.id}">${message.id}</a> replies <span id="replies"></span>
+            <pre id="textcontainer" style="font-family:Arial, Helvetica, sans-serif;">${replaceresult}</pre>
         </div>
     `)
+    var repliesContainer = html.querySelector('#replies')
+    for(let element of replieselements){
+        repliesContainer.appendChild(element)
+    }
     
-    this.mentions = Array.from(this.html.querySelectorAll('pre a'))
-    for(let mention of this.mentions){
-        this.addPreviewAndConversationLink(mention,parseInt(mention.dataset.messageid))
-        
+    var mentionelements = Array.from(html.querySelectorAll('pre a')) as HTMLElement[]
+    for(let mention of mentionelements){
+        if(previewLinks){
+            addPreviewAndConversationLink(mention,parseInt(mention.dataset.messageid))
+        }
     }
     return html
+}
+
+function addPreviewAndConversationLink(linkelement:HTMLElement,targetmessageid:number){
+    if(findMessage(targetmessageid) == null){
+        return
+    }else{
+        linkelement.addEventListener('mouseenter', e => {
+            setCursorFloater2(linkelement, targetmessageid)
+        })
+
+        // mention.addEventListener('mouseleave',e => {
+        //     cursorfloater.style.display = 'none'
+        // })
+
+        linkelement.addEventListener('click', e => {
+            e.preventDefault()
+            conversationcontainer.appendChild(renderMessage(targetmessageid,true))
+            //add to convo
+        })
+    }
 }
 
 class Mention{
@@ -150,11 +114,6 @@ function findMentions(messageid:number){
     return mentions.filter(m => m.originalMessage == messageid)
 }
 
-function findMessageChain(){
-
-}
-
-
 var textarea = document.querySelector('#textmessage') as HTMLTextAreaElement
 var sendbtn = document.querySelector('#sendbtn') as HTMLElement
 var messagecontainer = document.querySelector('#messagecontainer') as HTMLElement
@@ -165,14 +124,11 @@ var messages:Message[] = []
 var mentionidcounter = 0
 var mentions:Mention[] = []
 
-var message = new Message(messageidcounter++,'test message')
-messagecontainer.appendChild(message.render())
-messages.push(message)
+
+messagecontainer.appendChild(renderMessage(addMessage('test message'),true))
 
 function sendMessage(){
-    var message = new Message(messageidcounter++,textarea.value)
-    messages.push(message)
-    messagecontainer.appendChild(message.render())
+    messagecontainer.appendChild(renderMessage(addMessage(textarea.value),true))
     textarea.value = ''
 }
 
@@ -194,22 +150,11 @@ document.addEventListener('mousedown', e => {
     }
 })
 
-function setCursorFloater(poselement:HTMLElement,targetElement:HTMLElement){
+function setCursorFloater2(poselement:HTMLElement,targetMessage:number){
     cursorfloater.style.display = ''
     var rect = poselement.getBoundingClientRect()
-    
     cursorfloater.style.top = `${rect.top + window.pageYOffset + 5}px`
     cursorfloater.style.left = `${rect.right + window.pageXOffset + 5}px`
-    cursorfloater.replaceChild(targetElement.cloneNode(true),cursorfloater.firstChild)
+    cursorfloater.replaceChild(renderMessage(targetMessage,false),cursorfloater.firstChild)
 }
-
-// function setCursorFloater(poselement:HTMLElement,targetMessage:number){
-//     var target = findMessage(targetMessage)
-//     cursorfloater.style.display = ''
-//     var rect = poselement.getBoundingClientRect()
-    
-//     cursorfloater.style.top = `${rect.top + window.pageYOffset + 5}px`
-//     cursorfloater.style.left = `${rect.right + window.pageXOffset + 5}px`
-//     cursorfloater.replaceChild(target.copy().render(),cursorfloater.firstChild)
-// }
 
