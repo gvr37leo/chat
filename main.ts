@@ -2,6 +2,9 @@
 /// <reference path="node_modules/utilsx/utils.ts" />
 /// <reference path="message.ts" />
 
+//order replies by upvotes/relevance/createddate
+//order messages by upvotes/relevance/createddate
+
 function findMessage(messageid:number){
     return messages.find(m => m.id == messageid)
 }
@@ -24,29 +27,35 @@ var messages:Message[] = []
 var mentionidcounter = 0
 var mentions:Mention[] = []
 var conversationMessages:number[] = []
+moment.relativeTimeThreshold('s', 40);
+moment.relativeTimeThreshold('ss', 3);
 
 textarea.focus()
-textarea.value = 'test message'
+textarea.value = '@0 test comment'
 sendMessage()
-textarea.value = '>>0'
+textarea.value = '@0 '
 
 sendbtn.addEventListener('click',e => {
     sendMessage()
 })
 
 function sendMessage(){
-    let newmessageid = addMessage(textarea.value)
+    addMessage(textarea.value)
     messagecontainer.innerHTML = ''
-    for(var message of messages){
-        messagecontainer.appendChild(renderMessage(message.id,true,(linktarget) => {
+    for (let i = 0; i < messages.length; i++) {
+        const message = messages[i];
+        var messagehtml = renderMessage(message.id,true,(linktarget) => {
             conversationMessages = [linktarget]
             renderConvo()
-        }))
+        })
+        if(i == messages.length - 1){
+            messagehtml.classList.add('animate__animated','animate__fadeInDown')
+        }else{
+            messagehtml.classList.add('animate__animated','animate__slideInDown')
+        }
+        messagecontainer.prepend(messagehtml)
+        
     }
-    // messagecontainer.appendChild(renderMessage(newmessageid,true,(linktarget) => {
-    //     conversationMessages = [linktarget]
-    //     renderConvo()
-    // }))
     textarea.value = ''
 }
 

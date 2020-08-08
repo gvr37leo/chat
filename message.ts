@@ -1,10 +1,10 @@
+declare var moment
 var closehoveronmouseleave = true
-
+var messageRegex = /@(?<targetid>[0-9]{1,6})/g
 class Message{
     createdAt:Date = new Date()
-    // html:HTMLElement
-    // repliesspan:HTMLSpanElement
-    // mentions:HTMLElement[]
+    upvotes = 0
+    downvotes = 0
     constructor(
         public id:number,
         public text:string,
@@ -24,13 +24,18 @@ class Mention{
 }
 
 function addMessage(text:string):number{
-    var regex = />>([0-9]{1,6})/g
-    var result = regex.exec(text)
+    var result = messageRegex.exec(text) as any
     var newmessageid = messageidcounter++
     
+    var targetset = new Set<number>()
     while(result != null){
-        mentions.push(new Mention(mentionidcounter++, newmessageid, parseInt(result[1])))
-        result = regex.exec(text)
+        var targetid = parseInt(result.groups.targetid)
+        if(targetset.has(targetid) == false){
+            targetset.add(targetid)
+            mentions.push(new Mention(mentionidcounter++, newmessageid, targetid))
+        }
+        
+        result = messageRegex.exec(text)
     }
     messages.push(new Message(newmessageid,text))
     
@@ -41,26 +46,49 @@ function renderMessage(id:number,previewLinks:boolean,onlinkClick:(linktarget:nu
     var mentions = findMentions(id)
     var replies = findReplies(id)
     var message = findMessage(id)
-    var regex = />>([0-9]{1,6})/g
+
+    //order replies by upvotes/relevance/createddate
 
     var replieselements = replies.map(rep => {
-        var element = string2html(`<a style="margin-right:10px;" href="#${rep.originalMessage}">${rep.originalMessage}</a>`)
+        var element = string2html(`<a style="margin-right:10px;" href="#${rep.originalMessage}">@${rep.originalMessage}</a>`)
         if(previewLinks){
             addPreviewAndConversationLink(element,rep.originalMessage,onlinkClick)
         }
         return element
     })
 
-    var replaceresult = message.text.replace(regex,(substring,p1) => {
+    var replaceresult = message.text.replace(messageRegex,(substring,p1) => {
         return `<a href="#${p1}" data-messageid="${p1}">${substring}</a>`
     })
 
     var html = string2html(`
         <div style="border:1px solid black; margin:10px 0px; padding:10px; max-width:700px; max-height:200px; overflow:auto; background-color: white;">
-            <a name="${message.id}" href="#${message.id}">${message.id}</a> <span>${message.createdAt.toLocaleTimeString()}</span> replies <span id="replies"></span>
+            <a id="messageid" name="${message.id}" href="#${message.id}">${message.id}</a>
+            <span id="upvotes" style="cursor:pointer;">up</span> <span id="upvotecounter">${message.upvotes - message.downvotes}</span> <span style="cursor:pointer;" id="downvotes">down</span> 
+            <b>${moment(message.createdAt).fromNow()}</b>
+            <span id="replies"></span>
             <pre id="textcontainer" style="font-family:Arial, Helvetica, sans-serif;">${replaceresult}</pre>
+            <a href="#" id="replybtn">reply</a>
         </div>
     `)
+    var upvotecounter = html.querySelector('#upvotecounter')
+
+    html.querySelector('#upvotes').addEventListener('click', e => {
+        message.upvotes++
+        upvotecounter.innerHTML = `${message.upvotes - message.downvotes}`
+    })
+    
+    html.querySelector('#downvotes').addEventListener('click', e => {
+        message.downvotes++
+        upvotecounter.innerHTML = `${message.upvotes - message.downvotes}`
+    })
+    
+    html.querySelector('#replybtn').addEventListener('click', e => {
+        e.preventDefault()
+        textarea.value = `@${id} ` + textarea.value
+        textarea.focus()
+    })
+
     var repliesContainer = html.querySelector('#replies')
     for(let element of replieselements){
         repliesContainer.appendChild(element)
@@ -88,7 +116,6 @@ function addPreviewAndConversationLink(linkelement:HTMLElement,targetmessageid:n
                 cursorfloater.style.display = 'none'
             }
         })
-
 
         linkelement.addEventListener('click', e => {
             e.preventDefault()
