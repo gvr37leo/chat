@@ -22,7 +22,7 @@ var sendbtn = document.querySelector('#sendbtn') as HTMLElement
 var messagecontainer = document.querySelector('#messagecontainer') as HTMLElement
 var cursorfloater = document.querySelector('#cursorfloater') as HTMLElement
 var conversationcontainer = document.querySelector('#conversationcontainer') as HTMLElement
-var messageidcounter = 0
+var messageidcounter = 1
 var messages:Message[] = []
 var mentionidcounter = 0
 var mentions:Mention[] = []
@@ -31,9 +31,9 @@ moment.relativeTimeThreshold('s', 40);
 moment.relativeTimeThreshold('ss', 3);
 
 textarea.focus()
-textarea.value = '@0 test comment'
+textarea.value = '@1 test comment'
 sendMessage()
-textarea.value = '@0 '
+textarea.value = '@1 '
 
 sendbtn.addEventListener('click',e => {
     sendMessage()
@@ -41,22 +41,33 @@ sendbtn.addEventListener('click',e => {
 
 function sendMessage(){
     addMessage(textarea.value)
+    renderMessages(true)
+    textarea.value = ''
+}
+
+function renderMessages(animate:boolean){
     messagecontainer.innerHTML = ''
-    for (let i = 0; i < messages.length; i++) {
-        const message = messages[i];
+
+    // var sortedmessages = messages.slice().sort((a,b) => (a.netUpvotes() - b.netUpvotes()) * -1)
+    var sortedmessages = messages.slice().sort((a,b) => a.createdAt.getTime() - b.createdAt.getTime())
+
+
+    for (let i = 0; i < sortedmessages.length; i++) {
+        const message = sortedmessages[i];
         var messagehtml = renderMessage(message.id,true,(linktarget) => {
             conversationMessages = [linktarget]
             renderConvo()
         })
-        if(i == messages.length - 1){
-            messagehtml.classList.add('animate__animated','animate__fadeInDown')
-        }else{
-            messagehtml.classList.add('animate__animated','animate__slideInDown')
+        if(animate){
+            if(i == sortedmessages.length - 1){
+                messagehtml.classList.add('animate__animated','animate__fadeInDown')
+            }else{
+                // messagehtml.classList.add('animate__animated','animate__slideInDown')
+            }
         }
         messagecontainer.prepend(messagehtml)
         
     }
-    textarea.value = ''
 }
 
 

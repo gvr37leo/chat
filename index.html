@@ -27,22 +27,24 @@
         
             </div>
         </div>
-        <div id="conversationcontainer" style="border: 1px solid black; margin-left: 10px; padding:10px; max-width: 600px;">
-            <b>Conversation inspector</b><br />
-            Clicking on a comment link (for example <a href="#">@12</a>) adds the comment to this conversation inspector.
-            Clicking on comment links of comments that are already in the conversation inspector allows you to dive deeper into a conversation.
-
-            <p>
-                This conversation inspector is meant as a proof of concept for busy comment sections of websites like reddit and youtube.
-                The problem it tries to solve is the case where you have a very busy comment section and the comments arent ordered chronologically but
-                instead by upvotes or relevance. The problems you get are that:
-                <ol>
-                    <li>When people start replying to each others comments the conversation can get lost because of
-                        the none chronological ordering of the comments.</li>
-                    <li>When a conversation is long and you use a "view replies" button to expand it, the comments become very deeply nested (this happens alot on reddit).</li>
-                    <li>Reddit and Youtube use a system where you can only reply to a single comment. This system allows people to reply/address multiple comments at once.</li>
-                </ol>
-            </p>
+        <div style="position:relative">
+            <div id="conversationcontainer" style="position: fixed; border: 1px solid black; margin: 0px 10px 0 10px; padding:10px; max-width: 600px;">
+                <b>Conversation inspector</b><br />
+                Clicking on a comment link (for example <a href="#">@1</a>) adds the comment to this conversation inspector.
+                Clicking on comment links of comments that are already in the conversation inspector allows you to dive deeper into a conversation.
+    
+                <p>
+                    This conversation inspector is meant as a proof of concept for busy comment sections of websites like reddit and youtube.
+                    The problem it tries to solve is the case where you have a very busy comment section and the comments arent ordered chronologically but
+                    instead by upvotes or relevance. The problems you get are that:
+                    <ol>
+                        <li>When people start replying to each others comments the conversation can get lost because of
+                            the none chronological ordering of the comments.</li>
+                        <li>When a conversation is long and you use a "view replies" button to expand it, the comments become very deeply nested (this happens alot on reddit).</li>
+                        <li>Reddit and Youtube use a system where you can only reply to a single comment. This system allows people to reply/address multiple comments at once.</li>
+                    </ol>
+                </p>
+            </div>
         </div>
     </div>
     <div id="cursorfloater" style="position: absolute;  display: none;">

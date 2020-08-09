@@ -11,6 +11,10 @@ class Message{
     ){
 
     }
+
+    netUpvotes(){
+        return this.upvotes - this.downvotes
+    }
 }
 
 class Mention{
@@ -47,12 +51,13 @@ function renderMessage(id:number,previewLinks:boolean,onlinkClick:(linktarget:nu
     var replies = findReplies(id)
     var message = findMessage(id)
 
-    //order replies by upvotes/relevance/createddate
+    var sortedreplies = replies.map(a => findMessage(a.originalMessage)).sort((a,b) => (a.netUpvotes() - b.netUpvotes()) * -1)
+    // var sortedreplies = replies.map(a => findMessage(a.originalMessage)).sort((a,b) => a.createdAt.getTime() - b.createdAt.getTime())
 
-    var replieselements = replies.map(rep => {
-        var element = string2html(`<a style="margin-right:10px;" href="#${rep.originalMessage}">@${rep.originalMessage}</a>`)
+    var replieselements = sortedreplies.map(rep => {
+        var element = string2html(`<a style="margin-right:10px;" href="#${rep.id}">@${rep.id}</a>`)
         if(previewLinks){
-            addPreviewAndConversationLink(element,rep.originalMessage,onlinkClick)
+            addPreviewAndConversationLink(element,rep.id,onlinkClick)
         }
         return element
     })
@@ -75,12 +80,14 @@ function renderMessage(id:number,previewLinks:boolean,onlinkClick:(linktarget:nu
 
     html.querySelector('#upvotes').addEventListener('click', e => {
         message.upvotes++
-        upvotecounter.innerHTML = `${message.upvotes - message.downvotes}`
+        renderMessages(false)
+        // upvotecounter.innerHTML = `${message.upvotes - message.downvotes}`
     })
     
     html.querySelector('#downvotes').addEventListener('click', e => {
         message.downvotes++
-        upvotecounter.innerHTML = `${message.upvotes - message.downvotes}`
+        renderMessages(false)
+        // upvotecounter.innerHTML = `${message.upvotes - message.downvotes}`
     })
     
     html.querySelector('#replybtn').addEventListener('click', e => {
